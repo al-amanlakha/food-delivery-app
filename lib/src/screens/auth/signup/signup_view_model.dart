@@ -1,15 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:food_delivery/src/utils/utils.dart';
+import 'package:get/get.dart';
 import 'package:food_delivery/src/data/model/address/address_model.dart';
 import 'package:food_delivery/src/screens/auth/otp_auth/otp_auth_view.dart';
 import 'package:food_delivery/src/screens/profile_sub_screens/address_book/add_address/add_address_view.dart';
 import 'package:food_delivery/src/screens/profile_sub_screens/address_book/add_address/add_address_view_model.dart';
-import 'package:food_delivery/src/screens/profile_sub_screens/address_book/edit_address/edit_address_view.dart';
-import 'package:get/get.dart';
-
 import '../../../constants/app_strings.dart';
 import '../../../constants/app_values.dart';
-import '../../../data/model/profile/user_profile_model.dart';
-import '../../profile_sub_screens/address_book/edit_address/edit_address_view_model.dart';
+import '../../../data/firebase/firestore_service.dart';
+import '../../../data/model/profile/user_model.dart';
+import '../../../data/firebase/auth_service.dart';
 
 class SignupViewModel extends GetxController {
   final TextEditingController nameController = TextEditingController();
@@ -19,6 +21,7 @@ class SignupViewModel extends GetxController {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPassword = TextEditingController();
 
+  bool isLoading = false;
   bool isPasswordVisible = false;
   bool isConfirmPasswordVisible = false;
 
@@ -26,8 +29,16 @@ class SignupViewModel extends GetxController {
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
+
   void togglePasswordVisibility() {
     isPasswordVisible = !isPasswordVisible;
+    update();
+  }
+
+  void setLoading(bool loading) {
+    isLoading = loading;
     update();
   }
 
@@ -57,43 +68,78 @@ class SignupViewModel extends GetxController {
       duration:
           const Duration(milliseconds: AppValues.defaultAnimationDuration),
       binding: BindingsBuilder(
-        () => Get.lazyPut(
-          () => AddAddressViewModel(),
-          fenix: true,
-        ),
-      ),
+          () => Get.lazyPut(() => AddAddressViewModel(), fenix: true)),
     );
 
-    if(result != null) {
+    if (result != null) {
       address = result as AddressModel;
       addressController.text = address!.completeAddress!;
       update();
     }
   }
 
-  void validateAndSubmit() {
+  void validateAndSubmit() async {
     if (formKey.currentState?.validate() ?? false) {
-      // If the form is valid, create the UserProfileModel and print the data
-      const String dialCode = AppStrings.ukDialCode; // Assuming UK Dial Code
+      const String dialCode = AppStrings.ukDialCode;
 
-      final UserProfileModel userProfile = UserProfileModel(
-        userName: nameController.text.trim(),
-        userEmail: emailController.text.trim(),
-        dialCode: dialCode,
-        phoneNumber: mobileController.text.trim(),
-      );
+      try {
+        setLoading(true);
+        UserCredential userCredential = await _authService.signUpWithEmail(
+            emailController.text.trim(), passwordController.text.trim());
+        final user = userCredential.user;
+        final displayName = nameController.text.trim();
+        await user!.updateDisplayName(displayName);
+        await _authService.signOut();
 
-      print('User Profile Data:');
-      print('Name: ${userProfile.userName}');
-      print('Email: ${userProfile.userEmail}');
-      print('Email: ${userProfile.dialCode}');
-      print('Phone Number: ${userProfile.phoneNumber}');
-
-      // Pass the profile model to the next page or wherever necessary
-      Get.toNamed(OtpAuthView.id, arguments: userProfile);
+        UserModel newUser = UserModel(
+          id: userCredential.user!.uid,
+          fullName: displayName,
+          email: emailController.text.trim(),
+          phoneNumber: mobileController.text.trim(),
+          dialCode: dialCode,
+          addresses: [
+            address ?? AddressModel(),
+          ],
+          dateJoined: DateTime.now(),
+          firstName: NameUtility.getFirstName(displayName) ?? "",
+          lastName: NameUtility.getLastName(displayName) ?? "",
+        );
+        await _firestoreService.addDocument(
+          'users',
+          newUser.toJson(),
+          documentId: newUser.id,
+        );
+        await _authService
+            .signInWithPhone("${newUser.dialCode}${newUser.phoneNumber}",
+                (String verId, int? resendToken) {
+          newUser.verificationId = verId;
+          setLoading(false);
+          Get.offNamed(
+            OtpAuthView.id,
+            arguments: newUser,
+          );
+        });
+      } on FirebaseAuthException catch (e) {
+        setLoading(false);
+        _showToast(e.message ?? 'An unknown error occurred during signup');
+      } catch (e) {
+        setLoading(false);
+        _showToast('An unexpected error occurred: ${e.toString()}');
+      }
     } else {
-      // Validation failed
-      print('Form validation failed.');
+      setLoading(false);
+      _showToast('Form validation failed.');
     }
+  }
+
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+        msg: message,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0);
   }
 }

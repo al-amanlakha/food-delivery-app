@@ -1,10 +1,10 @@
 import 'dart:convert';
 
+import 'package:food_delivery/src/data/model/profile/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/address/address_model.dart';
 import '../model/location/user_location.dart';
-import '../model/profile/user_profile_model.dart';
 import 'preference_manager.dart';
 
 class PreferenceManagerImpl implements PreferenceManager {
@@ -139,14 +139,14 @@ class PreferenceManagerImpl implements PreferenceManager {
   }
 
   @override
-  Future<void> setUserProfile(UserProfileModel userProfile) async {
+  Future<void> setUserProfile(UserModel userProfile) async {
     String userProfileJson = profileModelToJson(userProfile);
     await _preference
         .then((prefs) => prefs.setString("userProfile", userProfileJson));
   }
 
   @override
-  Future<UserProfileModel?> getUserProfile() async {
+  Future<UserModel?> getUserProfile() async {
     final SharedPreferences prefs = await _preference;
     String? userProfileString = prefs.getString("userProfile");
     if (userProfileString == null) return null;
@@ -165,5 +165,15 @@ class PreferenceManagerImpl implements PreferenceManager {
     String? userAddressString = prefs.getString("userAddress");
     if (userAddressString == null) return null;
     return addressModelFromJson(userAddressString);
+  }
+
+  @override
+  Future<bool> setOnboardingShown(bool shown) {
+    return _preference.then((prefs) => prefs.setBool('onboardingShown', shown));
+  }
+
+  @override
+  Future<bool> isOnboardingShown() {
+    return _preference.then((prefs) => prefs.getBool('onboardingShown') ?? false);
   }
 }

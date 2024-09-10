@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -19,6 +20,7 @@ class HomeViewModel extends GetxController
   double expandedBarHeight = 200.0;
   bool isCollapsed = false;
   bool didAddFeedback = false;
+  late final User? user;
 
   List<FoodItemModel> popularRestaurantsList = [
     FoodItemModel(
@@ -186,6 +188,7 @@ class HomeViewModel extends GetxController
   @override
   void onInit() {
     tabController = TabController(length: 5, vsync: this);
+    _getUser();
     super.onInit();
   }
 
@@ -195,5 +198,9 @@ class HomeViewModel extends GetxController
     searchController.dispose();
     tabController.dispose();
     super.dispose();
+  }
+
+  void _getUser() {
+    user = FirebaseAuth.instance.currentUser;
   }
 }

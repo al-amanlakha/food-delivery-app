@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/src/extensions/media_query_values.dart';
+import 'package:food_delivery/src/utils/utils.dart';
 import 'package:get/get.dart';
 
 import '../../../constants/app_colors.dart';
@@ -36,6 +37,7 @@ class HomeView extends StatelessWidget {
             child: NestedScrollView(
               controller: controller.scrollController,
               headerSliverBuilder: (context, innerBoxIsScrolled) {
+                final String? firstName = NameUtility.getFirstName(controller.user?.displayName);
                 return [
                   SliverAppBar(
                     pinned: true,
@@ -80,7 +82,7 @@ class HomeView extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Hello Amandeep!",
+                                "Hello $firstName!",
                                 style: AppTextStyles.heading1.copyWith(
                                   color: AppColors.white,
                                 ),

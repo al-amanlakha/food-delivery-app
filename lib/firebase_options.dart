@@ -47,21 +47,21 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBTajtYqg-emyuM8zmd_hj_OYTa_FdxtuU',
-    appId: '1:355346172285:web:f1d34414e933572a1fa414',
-    messagingSenderId: '355346172285',
-    projectId: 'monkey-meal',
-    authDomain: 'monkey-meal.firebaseapp.com',
-    storageBucket: 'monkey-meal.appspot.com',
-    measurementId: 'G-E9F3FW6EWM',
+    apiKey: 'AIzaSyAMumtEqTXjGSlBnSXDJPJehWxnJwRVi3g',
+    appId: '1:560241871001:web:52c6e90f8907d55a359008',
+    messagingSenderId: '560241871001',
+    projectId: 'monkey-meal-food-app',
+    authDomain: 'monkey-meal-food-app.firebaseapp.com',
+    storageBucket: 'monkey-meal-food-app.appspot.com',
+    measurementId: 'G-Z6HY6PEJ3D',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB2sAaLljnT_lYozI4JrmXiROOJ4BXDrjg',
-    appId: '1:355346172285:android:3bc85f2078ee9c531fa414',
-    messagingSenderId: '355346172285',
-    projectId: 'monkey-meal',
-    storageBucket: 'monkey-meal.appspot.com',
+    apiKey: 'AIzaSyCBNbEU3SAZx0DNk1v8W2gDFczr6J7t2-I',
+    appId: '1:560241871001:android:7e4c0f5ce8f952cc359008',
+    messagingSenderId: '560241871001',
+    projectId: 'monkey-meal-food-app',
+    storageBucket: 'monkey-meal-food-app.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

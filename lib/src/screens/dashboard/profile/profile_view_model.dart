@@ -1,7 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/animation.dart';
 import 'package:get/get.dart';
 import '../../../constants/app_strings.dart';
 import '../../../constants/app_values.dart';
+import '../../../data/firebase/auth_service.dart';
+import '../../../data/firebase/firestore_service.dart';
+import '../../../data/model/profile/user_model.dart';
 import '../../../data/model/profile/user_profile_model.dart';
 import '../../../widgets/dialogs/confirm_action_dialog.dart';
 import '../../profile_sub_screens/address_book/address_book_view.dart';
@@ -20,10 +24,46 @@ import '../../profile_sub_screens/preferences/preferences_view.dart';
 import '../../profile_sub_screens/preferences/preferences_view_model.dart';
 import '../../welcome/welcome_view.dart';
 
-
 class ProfileViewModel extends GetxController {
-  UserProfileModel userProfileModel = UserProfileModel(
-      userName: "Amandeep", phoneNumber: "7448653212");
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
+  final FirebaseAuth auth = FirebaseAuth.instance;
+
+  bool isLoading = false;
+  UserModel? userModel;
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCurrentUserProfile();
+  }
+
+  void setLoading(bool loading) {
+    isLoading = loading;
+    update();
+  }
+
+  Future<void> fetchCurrentUserProfile() async {
+    setLoading(true);
+    User? user = auth.currentUser;
+    if (user != null) {
+      var userData = await _firestoreService.getDocument('users', user.uid);
+      if (userData != null) {
+        userModel = UserModel.fromJson(userData);
+      } else {
+        // Handle the scenario when the user profile is not found
+        userModel = UserModel(
+          id: user.uid,
+          fullName: "Default User",
+          email: user.email ?? "",
+          emailVerified: user.emailVerified,
+          dateJoined: DateTime.now(),
+          // Populate other default values as needed
+        );
+      }
+    }
+    setLoading(false);
+  }
 
   void onMyProfileTap() async {
     final result = await Get.to(
@@ -32,7 +72,7 @@ class ProfileViewModel extends GetxController {
       transition: Transition.cupertino,
       duration:
           const Duration(milliseconds: AppValues.defaultAnimationDuration),
-      arguments: userProfileModel,
+      arguments: userModel,
       binding: BindingsBuilder(
         () => Get.lazyPut(
           () => MyProfileViewModel(),
@@ -41,7 +81,7 @@ class ProfileViewModel extends GetxController {
       ),
     );
     if (result != null) {
-      userProfileModel = result;
+      userModel = result;
       update();
     }
   }
@@ -147,8 +187,11 @@ class ProfileViewModel extends GetxController {
       ConfirmActionDialog(
         title: AppStrings.logout,
         message: "Are you sure you want to logout from the app? ",
-        onConfirm: () {
+        onConfirm: () async {
+          setLoading(true);
+          await _authService.signOut();
           Get.offAllNamed(WelcomeView.id);
+          setLoading(false);
         },
       ),
     );

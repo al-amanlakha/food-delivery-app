@@ -1,3 +1,4 @@
+import 'package:food_delivery/src/data/model/profile/user_model.dart';
 
 import '../model/address/address_model.dart';
 import '../model/location/user_location.dart';
@@ -43,11 +44,15 @@ abstract class PreferenceManager {
 
   Future<UserLocation?> getUserLocation();
 
-  Future<void> setUserProfile(UserProfileModel userProfile);
+  Future<void> setUserProfile(UserModel userProfile);
 
-  Future<UserProfileModel?> getUserProfile();
+  Future<UserModel?> getUserProfile();
 
   Future<void> setUserAddress(AddressModel userAddress);
 
   Future<AddressModel?> getUserAddress();
+
+  Future<bool> setOnboardingShown(bool shown);
+
+  Future<bool> isOnboardingShown();
 }

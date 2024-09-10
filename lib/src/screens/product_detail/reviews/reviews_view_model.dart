@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:food_delivery/src/data/model/profile/user_model.dart';
 import 'package:food_delivery/src/data/model/profile/user_profile_model.dart';
 import 'package:get/get.dart';
 
@@ -9,7 +10,7 @@ class ReviewsViewModel extends GetxController {
   final PreferenceManager _preference =
   Get.find(tag: (PreferenceManager).toString());
 
-  UserProfileModel? userProfile;
+  UserModel? userProfile;
 
   final TextEditingController reviewController = TextEditingController();
 
@@ -60,7 +61,7 @@ class ReviewsViewModel extends GetxController {
   void onSubmit() {
     if (initialRating > 0) {
       final newReview = ReviewModel(
-        name: userProfile?.userName ?? 'Anonymous',
+        name: userProfile?.fullName ?? 'Anonymous',
         rating: initialRating,
         review: reviewController.text.trim(),
         reviewDate: DateTime.now(),

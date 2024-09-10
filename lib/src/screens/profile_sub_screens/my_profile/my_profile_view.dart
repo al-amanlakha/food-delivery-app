@@ -1,20 +1,13 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../constants/app_colors.dart';
-
-
-import '../../../constants/app_images.dart';
 import '../../../constants/app_paddings.dart';
 import '../../../constants/app_strings.dart';
 import '../../../constants/app_text_styles.dart';
 import '../../../constants/app_values.dart';
-import '../../../data/model/profile/user_profile_model.dart';
-import '../../../utils/global_utils.dart';
+import '../../../utils/validators.dart';
 import '../../../widgets/buttons/generic_button.dart';
 import '../../../widgets/loader/generic_loader.dart';
 import '../../../widgets/profile/sub_profile_app_bar.dart';
@@ -28,21 +21,18 @@ class MyProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<MyProfileViewModel>(
       builder: (controller) {
-        if (controller.model == null) {
+        if (controller.userModel == null) {
           return const Scaffold(
-            appBar: SubProfileAppBar(
-              title: AppStrings.myProfile,
-            ),
-            body: Center(
-              child: GenericLoader(),
-            ),
+            appBar: SubProfileAppBar(title: AppStrings.myProfile),
+            body: Center(child: GenericLoader()),
           );
-        } else {
-          final UserProfileModel model = controller.model!;
-          return PopScope(
+        }
+        return AbsorbPointer(
+          absorbing: controller.isSaving,
+          child: PopScope(
             canPop: false,
             onPopInvokedWithResult: (didPop, result) {
-              if(didPop) {
+              if (didPop) {
                 return;
               }
               controller.onBackTap();
@@ -52,160 +42,167 @@ class MyProfileView extends StatelessWidget {
                 onTap: controller.onBackTap,
                 title: AppStrings.myProfile,
               ),
-              body: SingleChildScrollView(
-                padding: AppPaddings.defaultPaddingAll,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: InkWell(
-                        onTap: controller.proceedProfileOnTap,
-                        child: IntrinsicWidth(
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 60,
-                                backgroundColor: AppColors.lightGrey,
-                                backgroundImage: model.userProfileImage != null
-                                    ? (model.userProfileImage!.startsWith('http')
-                                        ? NetworkImage(model.userProfileImage!)
-                                        : FileImage(
-                                            File(model.userProfileImage!)))
-                                    : null,
-                                child: model.userProfileImage == null
-                                    ? const Icon(
-                                        Icons.person,
-                                        color: AppColors.white,
-                                        size: 36,
-                                      )
-                                    : null,
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 15,
-                                child: Container(
-                                  padding: const EdgeInsets.all(AppValues.padding4,),
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: AppColors.orange,
-                                    ),
-                                    child: const PhosphorIcon(PhosphorIconsRegular.camera, color: AppColors.white,)),
-                              ),
-                            ],
+              body: Stack(
+                fit: StackFit.expand,
+                children: [
+                  SingleChildScrollView(
+                    padding: AppPaddings.defaultPaddingAll,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: InkWell(
+                            onTap: controller.proceedProfileOnTap,
+                            child: buildProfilePicture(controller),
                           ),
                         ),
-                      ),
-                    ),
-                    defaultHeightSpacing,
-                    defaultHeightSpacing,
-                    defaultHeightSpacing,
-                    Text(
-                      AppStrings.mobileNumber,
-                      style: AppTextStyles.text2.copyWith(
-                        color: AppColors.grey,
-                      ),
-                    ),
-                    const SizedBox(
-                      height: AppValues.margin4,
-                    ),
-                    GenericTextField(
-                      controller: controller.mobileController,
-                      prefix: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            AppStrings.ukDialCode,
-                            style: AppTextStyles.text1,
+                        const SizedBox(height: AppValues.defaultPadding),
+                        buildTextFieldSection(
+                          controller: controller.mobileController,
+                          label: AppStrings.mobileNumber,
+                          hint: AppStrings.hint10Digit,
+                          textInputType: TextInputType.number,
+                          isMobile: true,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10)
+                          ],
+                          validator: Validator.validatePhoneNumber,
+                        ),
+                        buildTextFieldSection(
+                          controller: controller.nameController,
+                          label: AppStrings.name,
+                          hint: AppStrings.hintName,
+                          textInputType: TextInputType.name,
+                          validator: Validator.validateName,
+                        ),
+                        buildTextFieldSection(
+                          controller: controller.emailController,
+                          label: AppStrings.email,
+                          hint: AppStrings.hintEmail,
+                          textInputType: TextInputType.emailAddress,
+                          validator: Validator.validateEmail,
+                          textInputAction: TextInputAction.done,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppValues.defaultPadding,
+                            vertical: AppValues.padding10,
                           ),
-                          const SizedBox(
-                            width: AppValues.margin4,
+                          child: GenericButton(
+                            onPressed: controller.isDataChanged
+                                ? controller.saveProfile
+                                : null,
+                            title: Text(AppStrings.save,
+                                style: AppTextStyles.title
+                                    .copyWith(color: AppColors.white)),
                           ),
-                          Text(
-                            "|",
-                            style: AppTextStyles.text1.copyWith(
-                              color: AppColors.grey,
-                            ),
-                          ),
-                          const SizedBox(
-                            width: AppValues.margin4,
-                          ),
-                        ],
-                      ),
-                      textInputAction: TextInputAction.done,
-                      keyboardType: TextInputType.number,
-                      hintText: AppStrings.hint10Digit,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10)
-                        // Limits the input to 10 digits
+                        ),
                       ],
                     ),
-                    defaultHeightSpacing,
-                    Text(
-                      AppStrings.name,
-                      style: AppTextStyles.text2.copyWith(
-                        color: AppColors.grey,
-                      ),
-                    ),
-                    const SizedBox(
-                      height: AppValues.margin4,
-                    ),
-                    GenericTextField(
-                      controller: controller.nameController,
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.name,
-                      hintText: AppStrings.hintName,
-                      inputFormatters: [
-                        LengthLimitingTextInputFormatter(35),
-                        // Limits the input to 10 digits
-                      ],
-                    ),
-                    defaultHeightSpacing,
-                    Text(
-                      "${AppStrings.email} ${AppStrings.optional}",
-                      style: AppTextStyles.text2.copyWith(
-                        color: AppColors.grey,
-                      ),
-                    ),
-                    const SizedBox(
-                      height: AppValues.margin4,
-                    ),
-                    GenericTextField(
-                      controller: controller.emailController,
-                      textInputAction: TextInputAction.done,
-                      keyboardType: TextInputType.emailAddress,
-                      hintText: AppStrings.hintEmail,
-                    ),
-                  ],
-                ),
-              ),
-              bottomNavigationBar: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppValues.defaultPadding,
-                  vertical: AppValues.padding10,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    GenericButton(
-                      onPressed: controller.isDataChanged
-                          ? controller.saveProfile
-                          : null,
-                      title: Text(
-                        AppStrings.save,
-                        style:
-                            AppTextStyles.title.copyWith(color: AppColors.white),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  if (controller.isSaving) const GenericLoader(),
+                ],
               ),
             ),
-          );
-        }
+          ),
+        );
       },
+    );
+  }
+
+  Widget buildProfilePicture(MyProfileViewModel controller) {
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        CircleAvatar(
+          radius: 60,
+          backgroundColor: AppColors.lightGrey,
+          backgroundImage: controller.userModel?.profileImageUrl != null
+              ? NetworkImage(controller.userModel!.profileImageUrl!)
+              : null,
+          child: controller.isUploadingImage
+              ? const CircularProgressIndicator(
+                  color: AppColors.orange,
+                )
+              : controller.userModel?.profileImageUrl == null
+                  ? const Icon(Icons.person, color: AppColors.white, size: 40)
+                  : null,
+        ),
+        Container(
+          padding: const EdgeInsets.all(AppValues.padding8),
+          decoration: const BoxDecoration(
+            color: AppColors.orange,
+            shape: BoxShape.circle,
+          ),
+          child: const PhosphorIcon(
+            PhosphorIconsRegular.camera,
+            color: AppColors.white,
+            size: 24,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildTextFieldSection({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required TextInputType textInputType,
+    TextInputAction textInputAction = TextInputAction.next,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+    bool isMobile = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.text2.copyWith(color: AppColors.grey),
+        ),
+        const SizedBox(height: AppValues.margin4),
+        isMobile
+            ? GenericTextField(
+                controller: controller,
+                prefix: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      AppStrings.ukDialCode,
+                      style: AppTextStyles.text1,
+                    ),
+                    const SizedBox(
+                      width: AppValues.margin4,
+                    ),
+                    Text(
+                      "|",
+                      style: AppTextStyles.text1.copyWith(
+                        color: AppColors.grey,
+                      ),
+                    ),
+                    const SizedBox(
+                      width: AppValues.margin4,
+                    ),
+                  ],
+                ),
+                textInputAction: textInputAction,
+                keyboardType: TextInputType.number,
+                hintText: hint,
+                inputFormatters: inputFormatters,
+                validator: validator,
+              )
+            : GenericTextField(
+                controller: controller,
+                hintText: hint,
+                keyboardType: textInputType,
+                textInputAction: textInputAction,
+                inputFormatters: inputFormatters,
+                validator: validator,
+              ),
+        const SizedBox(height: AppValues.defaultPadding),
+      ],
     );
   }
 }

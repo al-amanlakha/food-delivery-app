@@ -186,3 +186,23 @@ class CardMonthInputFormatter extends TextInputFormatter {
         selection: TextSelection.collapsed(offset: string.length));
   }
 }
+class NameUtility {
+  /// Extracts the first name from a full name.
+  /// Returns `null` if the full name is empty or null.
+  static String? getFirstName(String? fullName) {
+    if (fullName == null || fullName.isEmpty) return null;
+
+    List<String> nameParts = fullName.split(' ');
+    return nameParts.isNotEmpty ? nameParts.first : null;
+  }
+
+  /// Extracts the last name from a full name.
+  /// Returns `null` if the full name is empty or null, or if there is no last name.
+  static String? getLastName(String? fullName) {
+    if (fullName == null || fullName.isEmpty) return null;
+
+    List<String> nameParts = fullName.trim().split(' ');
+    return nameParts.length > 1 ? nameParts.last : null;
+  }
+}
+

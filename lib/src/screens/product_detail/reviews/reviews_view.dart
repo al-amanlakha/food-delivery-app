@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:custom_rating_bar/custom_rating_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:food_delivery/src/data/model/profile/user_model.dart';
 import 'package:get/get.dart';
 
 import '../../../constants/app_colors.dart';
@@ -23,7 +24,7 @@ class ReviewsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetBuilder<ReviewsViewModel>(
       builder: (controller) {
-        final UserProfileModel? user = controller.userProfile;
+        final UserModel? user = controller.userProfile;
         return CustomScrollView(
           shrinkWrap: true,
           slivers: [
@@ -52,14 +53,14 @@ class ReviewsView extends StatelessWidget {
                               ? CircleAvatar(
                                   radius: 30,
                                   backgroundColor: AppColors.lightGrey,
-                                  backgroundImage: user.userProfileImage != null
-                                      ? (user.userProfileImage!
+                                  backgroundImage: user.profileImageUrl != null
+                                      ? (user.profileImageUrl!
                                               .startsWith('http')
-                                          ? NetworkImage(user.userProfileImage!)
+                                          ? NetworkImage(user.profileImageUrl!)
                                           : FileImage(
-                                              File(user.userProfileImage!)))
+                                              File(user.profileImageUrl!)))
                                       : null,
-                                  child: user.userProfileImage == null
+                                  child: user.profileImageUrl == null
                                       ? const Icon(
                                           Icons.person,
                                           color: AppColors.white,

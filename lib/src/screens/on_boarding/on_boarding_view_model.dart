@@ -6,8 +6,11 @@ import 'package:food_delivery/src/screens/dashboard/dashboard_view.dart';
 import 'package:get/get.dart';
 
 import '../../constants/app_strings.dart';
+import '../../data/preference/preference_manager.dart';
 
 class OnBoardingViewModel extends GetxController {
+  final PreferenceManager _preference =
+  Get.find(tag: (PreferenceManager).toString());
   final PageController pageController = PageController(initialPage: 0);
   int pageNo = 0;
 
@@ -37,7 +40,7 @@ class OnBoardingViewModel extends GetxController {
     update();
   }
 
-  void goToOtherPage() {
+  void goToOtherPage() async {
     if (pageNo == 0) {
       pageController.animateToPage(
         1,
@@ -54,6 +57,7 @@ class OnBoardingViewModel extends GetxController {
         curve: Curves.ease,
       );
     } else {
+      await _preference.setOnboardingShown(true);
       Get.offAllNamed(
         DashboardView.id,
       );
